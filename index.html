@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Pro Task Dashboard - Recurring Task & Analytics Tracker</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Antigravity semantic tokens fallback if opened in external browser */
+    :root {
+      --background: #0f172a;
+      --card: #1e293b;
+      --content: #334155;
+      --border: #334155;
+      --foreground: #f8fafc;
+      --muted-foreground: #94a3b8;
+      --primary: #3b82f6;
+      --primary-foreground: #ffffff;
+      --accent: #10b981;
+      --accent-foreground: #ffffff;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --sidebar: #090d16;
+    }
+    .light {
+      --background: #f8fafc;
+      --card: #ffffff;
+      --content: #f1f5f9;
+      --border: #e2e8f0;
+      --foreground: #0f172a;
+      --muted-foreground: #64748b;
+      --primary: #2563eb;
+      --primary-foreground: #ffffff;
+      --accent: #059669;
+      --accent-foreground: #ffffff;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --sidebar: #f1f5f9;
+    }
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased flex flex-col custom-scrollbar">
+
+  <!-- TOP APP BAR -->
+  <header class="border-b border-[var(--border)] bg-[var(--card)] sticky top-0 z-40 shadow-sm backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-[var(--foreground)] tracking-tight">Pulse Pro</h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-medium border border-blue-500/20">Task Dashboard</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">Daily • Weekly • Monthly • Yearly Tasks with Historical Archiving</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions / Clock / Mode -->
+      <div class="flex items-center space-x-3">
+        <!-- Storage Status Pill -->
+        <div id="storageStatusPill" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium" title="Data is saved in local browser storage">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="storageStatusText">Auto-Saved</span>
+        </div>
+
+        <div class="hidden md:flex flex-col text-right">
+          <span id="headerClock" class="text-xs font-semibold text-[var(--foreground)]">--:--:--</span>
+          <span id="headerDate" class="text-xs text-[var(--muted-foreground)]">Loading date...</span>
+        </div>
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          <svg id="themeIconSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <svg id="themeIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <button onclick="openNewTaskModal()" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-xs font-medium hover:opacity-90 flex items-center gap-1.5 shadow-sm transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          New Task
+        </button>
+        <button onclick="openXTilesModal()" title="Export / Copy to xTiles" class="px-3 py-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-400 text-xs font-medium hover:bg-purple-500/20 flex items-center gap-1.5 transition shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+          xTiles Sync
+        </button>
+        <button onclick="openSettingsModal()" title="Data & Rollover Simulation" class="p-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTO-REFRESH STATUS BANNER -->
+  <div id="rolloverNotice" class="hidden bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2 text-xs text-emerald-400 text-center flex items-center justify-center gap-2">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <span id="rolloverNoticeText">New cadence period started! Historical records for previous periods were automatically archived.</span>
+    <button onclick="document.getElementById('rolloverNotice').classList.add('hidden')" class="ml-2 font-bold hover:underline">Dismiss</button>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- CADENCE NAVIGATION TABS & PERIOD SELECTOR -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+      <div class="flex items-center space-x-1 p-1 bg-[var(--card)] rounded-xl border border-[var(--border)]">
+        <button onclick="setActiveTab('all')" id="tab-btn-all" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-[var(--primary)] text-white shadow-sm">
+          All Cadences
+        </button>
+        <button onclick="setActiveTab('daily')" id="tab-btn-daily" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          Daily
+        </button>
+        <button onclick="setActiveTab('weekly')" id="tab-btn-weekly" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          Weekly
+        </button>
+        <button onclick="setActiveTab('monthly')" id="tab-btn-monthly" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          Monthly
+        </button>
+        <button onclick="setActiveTab('yearly')" id="tab-btn-yearly" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          Yearly
+        </button>
+        <button onclick="setActiveTab('history')" id="tab-btn-history" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          History & Archive
+        </button>
+      </div>
+
+      <!-- Current Period Info & Next Refresh Countdown -->
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-[var(--muted-foreground)]">Active Cycle:</span>
+        <span id="activeCycleBadge" class="px-2.5 py-1 rounded-md bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] font-mono font-medium">
+          Daily: 2026-10-30
+        </span>
+        <span id="nextRefreshCountdown" class="px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium" title="Time remaining until daily tasks automatically refresh and archive">
+          Resets in --:--:--
+        </span>
+      </div>
+    </div>
+
+    <!-- METRICS OVERVIEW CARDS -->
+    <div id="metricsDashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Completion Rate -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-[var(--muted-foreground)]">Completion Rate</span>
+          <span id="rateBadge" class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium border border-emerald-500/20">0%</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="metricCompletionRate" class="text-2xl font-bold text-[var(--foreground)] tracking-tight">0%</span>
+          <span id="metricTaskCounts" class="text-xs text-[var(--muted-foreground)]">0 of 0 completed</span>
+        </div>
+        <div class="w-full bg-[var(--content)] h-2 rounded-full mt-3 overflow-hidden">
+          <div id="progressBarRate" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Card 2: Average Time to Completion -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-[var(--muted-foreground)]">Avg. Time to Completion</span>
+          <div class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="metricAvgTime" class="text-2xl font-bold text-[var(--foreground)] tracking-tight">0 min</span>
+          <span class="text-xs text-[var(--muted-foreground)]">per completed task</span>
+        </div>
+        <p id="metricFastestSlowest" class="text-xs text-[var(--muted-foreground)] mt-3 truncate">
+          Tracking active & logged task durations
+        </p>
+      </div>
+
+      <!-- Card 3: Total Time Logged -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-[var(--muted-foreground)]">Total Time Logged</span>
+          <div class="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="metricTotalTime" class="text-2xl font-bold text-[var(--foreground)] tracking-tight">0 min</span>
+          <span class="text-xs text-[var(--muted-foreground)]">active investment</span>
+        </div>
+        <p id="metricActiveTimers" class="text-xs text-[var(--muted-foreground)] mt-3">
+          0 active stopwatches running
+        </p>
+      </div>
+
+      <!-- Card 4: Cadence Health Breakdown -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-medium text-[var(--muted-foreground)]">Cadence Breakdown</span>
+        <div class="grid grid-cols-4 gap-1 text-center mt-2">
+          <div class="p-1 rounded bg-[var(--content)]">
+            <div class="text-[11px] font-bold text-emerald-400" id="rateDailyMini">0%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Daily</div>
+          </div>
+          <div class="p-1 rounded bg-[var(--content)]">
+            <div class="text-[11px] font-bold text-blue-400" id="rateWeeklyMini">0%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Wkly</div>
+          </div>
+          <div class="p-1 rounded bg-[var(--content)]">
+            <div class="text-[11px] font-bold text-purple-400" id="rateMonthlyMini">0%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Mthly</div>
+          </div>
+          <div class="p-1 rounded bg-[var(--content)]">
+            <div class="text-[11px] font-bold text-amber-400" id="rateYearlyMini">0%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Yrly</div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-[var(--muted-foreground)] mt-3">
+          <span id="archivedPeriodsCount">0 periods in history</span>
+          <button onclick="setActiveTab('history')" class="text-blue-400 hover:underline">Explore</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN BOARD CONTAINER: ACTIVE TASKS -->
+    <div id="activeTasksSection" class="space-y-6">
+
+      <!-- FILTER & CONTROLS BAR -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-[var(--card)] border border-[var(--border)] p-3 rounded-xl">
+        <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+          <svg class="w-4 h-4 text-[var(--muted-foreground)] ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="taskSearchInput" oninput="renderBoard()" placeholder="Filter tasks or search notes..." class="bg-transparent text-xs text-[var(--foreground)] placeholder-[var(--muted-foreground)] focus:outline-none w-full">
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <label class="text-[var(--muted-foreground)]">Status:</label>
+          <select id="statusFilter" onchange="renderBoard()" class="bg-[var(--content)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-2 py-1 text-xs focus:outline-none">
+            <option value="all">All Tasks</option>
+            <option value="pending">Pending / In Progress</option>
+            <option value="completed">Completed Only</option>
+          </select>
+          <button onclick="openNewTaskModal()" class="px-2.5 py-1 rounded-lg border border-[var(--border)] hover:bg-[var(--content)] text-[var(--foreground)] text-xs flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Add Task
+          </button>
+        </div>
+      </div>
+
+      <!-- CADENCE TILES / BOARDS -->
+      <div id="cadenceColumnsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- DAILY COLUMN -->
+        <div id="col-daily" class="flex flex-col rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm min-h-[420px]">
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Daily Tasks</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="dailyColStats" class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-semibold font-mono">0/0</span>
+              <button onclick="openNewTaskModal('daily')" title="Add Daily Task" class="p-1 rounded hover:bg-[var(--content)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="text-[11px] text-[var(--muted-foreground)] py-1.5 flex justify-between items-center">
+            <span id="dailyPeriodLabel">Today</span>
+            <span class="text-emerald-400 font-medium" id="dailyAvgTimeLabel">Avg: --</span>
+          </div>
+          <div id="taskList-daily" class="space-y-3 mt-2 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar pr-1">
+            <!-- Dynamic Daily Tasks -->
+          </div>
+        </div>
+
+        <!-- WEEKLY COLUMN -->
+        <div id="col-weekly" class="flex flex-col rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm min-h-[420px]">
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Weekly Tasks</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="weeklyColStats" class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold font-mono">0/0</span>
+              <button onclick="openNewTaskModal('weekly')" title="Add Weekly Task" class="p-1 rounded hover:bg-[var(--content)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="text-[11px] text-[var(--muted-foreground)] py-1.5 flex justify-between items-center">
+            <span id="weeklyPeriodLabel">Current Week</span>
+            <span class="text-blue-400 font-medium" id="weeklyAvgTimeLabel">Avg: --</span>
+          </div>
+          <div id="taskList-weekly" class="space-y-3 mt-2 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar pr-1">
+            <!-- Dynamic Weekly Tasks -->
+          </div>
+        </div>
+
+        <!-- MONTHLY COLUMN -->
+        <div id="col-monthly" class="flex flex-col rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm min-h-[420px]">
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Monthly Tasks</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="monthlyColStats" class="text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-semibold font-mono">0/0</span>
+              <button onclick="openNewTaskModal('monthly')" title="Add Monthly Task" class="p-1 rounded hover:bg-[var(--content)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="text-[11px] text-[var(--muted-foreground)] py-1.5 flex justify-between items-center">
+            <span id="monthlyPeriodLabel">Current Month</span>
+            <span class="text-purple-400 font-medium" id="monthlyAvgTimeLabel">Avg: --</span>
+          </div>
+          <div id="taskList-monthly" class="space-y-3 mt-2 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar pr-1">
+            <!-- Dynamic Monthly Tasks -->
+          </div>
+        </div>
+
+        <!-- YEARLY COLUMN -->
+        <div id="col-yearly" class="flex flex-col rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm min-h-[420px]">
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Yearly Tasks</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="yearlyColStats" class="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-semibold font-mono">0/0</span>
+              <button onclick="openNewTaskModal('yearly')" title="Add Yearly Task" class="p-1 rounded hover:bg-[var(--content)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="text-[11px] text-[var(--muted-foreground)] py-1.5 flex justify-between items-center">
+            <span id="yearlyPeriodLabel">Current Year</span>
+            <span class="text-amber-400 font-medium" id="yearlyAvgTimeLabel">Avg: --</span>
+          </div>
+          <div id="taskList-yearly" class="space-y-3 mt-2 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar pr-1">
+            <!-- Dynamic Yearly Tasks -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HISTORY & ARCHIVE SECTION -->
+    <div id="historySection" class="hidden space-y-6">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div>
+            <h2 class="font-bold text-lg text-[var(--foreground)] flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Historical Archive & Analytics
+            </h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Explore past daily, weekly, monthly, and yearly cycles with preserved completion rates, task notes, and completion times.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-xs text-[var(--muted-foreground)]">Cadence:</label>
+              <select id="historyCadenceFilter" onchange="renderHistoryExplorer()" class="bg-[var(--content)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+                <option value="daily">Daily History</option>
+                <option value="weekly">Weekly History</option>
+                <option value="monthly">Monthly History</option>
+                <option value="yearly">Yearly History</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-xs text-[var(--muted-foreground)]">Period:</label>
+              <select id="historyPeriodSelector" onchange="loadHistoricalPeriodDetail()" class="bg-[var(--content)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none min-w-[160px]">
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORICAL SNAPSHOT STATS -->
+        <div id="historyStatsBar" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl bg-[var(--content)] border border-[var(--border)]">
+          <div>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Historical Completion Rate</span>
+            <div id="histMetricRate" class="text-xl font-bold text-emerald-400 mt-1">--%</div>
+          </div>
+          <div>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Average Time to Completion</span>
+            <div id="histMetricAvgTime" class="text-xl font-bold text-blue-400 mt-1">-- min</div>
+          </div>
+          <div>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Total Time Logged</span>
+            <div id="histMetricTotalTime" class="text-xl font-bold text-indigo-400 mt-1">-- min</div>
+          </div>
+          <div>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Tasks Completed</span>
+            <div id="histMetricTasksDone" class="text-xl font-bold text-[var(--foreground)] mt-1">0 / 0</div>
+          </div>
+        </div>
+
+        <!-- HISTORICAL TASKS TABLE / LIST -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">Archived Tasks & Associated Notes</h3>
+            <span id="histPeriodBadge" class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">Period: --</span>
+          </div>
+
+          <div class="overflow-x-auto border border-[var(--border)] rounded-xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-[var(--content)] text-[var(--muted-foreground)] border-b border-[var(--border)]">
+                  <th class="py-2.5 px-3 font-semibold">Status</th>
+                  <th class="py-2.5 px-3 font-semibold">Task Title</th>
+                  <th class="py-2.5 px-3 font-semibold">Time Spent</th>
+                  <th class="py-2.5 px-3 font-semibold">Completed At</th>
+                  <th class="py-2.5 px-3 font-semibold">Historical Notes</th>
+                </tr>
+              </thead>
+              <tbody id="historyTasksTableBody" class="divide-y divide-[var(--border)] text-[var(--foreground)]">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PAST TREND CHART -->
+        <div class="pt-4 border-t border-[var(--border)] space-y-3">
+          <h3 class="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">Historical Completion Trend</h3>
+          <div id="historyTrendBars" class="flex items-end gap-2 h-36 pt-6 px-2 bg-[var(--content)]/50 rounded-xl border border-[var(--border)] overflow-x-auto">
+            <!-- Dynamic trend bars -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TASK MODAL: ADD / EDIT TASK TEMPLATE -->
+  <div id="taskModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <h3 id="taskModalTitle" class="font-bold text-base text-[var(--foreground)]">Create Recurring Task</h3>
+        <button onclick="closeTaskModal()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <form id="taskForm" onsubmit="handleSaveTask(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="editTaskId">
+        
+        <div>
+          <label class="block font-medium text-[var(--foreground)] mb-1">Task Title *</label>
+          <input type="text" id="taskTitleInput" required placeholder="e.g. Daily Standup & Log Review" class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] text-xs">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-[var(--foreground)] mb-1">Cadence *</label>
+            <select id="taskCadenceSelect" class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)] focus:outline-none text-xs">
+              <option value="daily">Daily (Resets every midnight)</option>
+              <option value="weekly">Weekly (Resets every Sunday)</option>
+              <option value="monthly">Monthly (Resets 1st of month)</option>
+              <option value="yearly">Yearly (Resets Jan 1st)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-[var(--foreground)] mb-1">Estimated Minutes</label>
+            <input type="number" id="taskEstimateInput" min="1" max="1440" placeholder="e.g. 30" class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)] focus:outline-none text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-[var(--foreground)] mb-1">Tags / Category</label>
+          <input type="text" id="taskTagsInput" placeholder="e.g. Work, Health, Finance, Deep Work (comma separated)" class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)] focus:outline-none text-xs">
+        </div>
+
+        <div>
+          <label class="block font-medium text-[var(--foreground)] mb-1">Initial / Context Notes</label>
+          <textarea id="taskInitialNotesInput" rows="3" placeholder="Context, checklists, references, or instructions for this task..." class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)] focus:outline-none custom-scrollbar text-xs"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border)]">
+          <button type="button" onclick="closeTaskModal()" class="px-3.5 py-2 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition text-xs font-medium">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:opacity-95 transition text-xs font-medium shadow-sm">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NOTES & LOGGING DRAWER / MODAL -->
+  <div id="notesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div>
+          <h3 id="notesModalTaskTitle" class="font-bold text-base text-[var(--foreground)]">Task Notes & Duration Log</h3>
+          <span id="notesModalPeriodInfo" class="text-xs text-[var(--muted-foreground)]">Period: --</span>
+        </div>
+        <button onclick="closeNotesModal()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Duration Editor -->
+        <div class="p-3 bg-[var(--content)] rounded-xl border border-[var(--border)] flex items-center justify-between">
+          <div>
+            <span class="font-medium text-[var(--foreground)] block">Logged Completion Time</span>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Active timer or manual duration (minutes)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="notesDurationMinutes" min="0" max="1440" class="w-20 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-2 py-1 text-center font-mono font-bold focus:outline-none">
+            <span class="text-[var(--muted-foreground)]">min</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-[var(--foreground)] mb-1">Notes & Reflection for this Period</label>
+          <textarea id="notesContentTextarea" rows="6" placeholder="Document decisions, blockers, outcomes, links, or learnings from executing this task..." class="w-full bg-[var(--content)] border border-[var(--border)] rounded-lg p-3 text-[var(--foreground)] focus:outline-none custom-scrollbar text-xs leading-relaxed"></textarea>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">These notes are permanently preserved in historical archives when this cadence refreshes.</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border)]">
+          <button type="button" onclick="closeNotesModal()" class="px-3.5 py-2 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition text-xs font-medium">Cancel</button>
+          <button type="button" onclick="saveNotesModal()" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:opacity-95 transition text-xs font-medium shadow-sm">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS & DATA MODAL (BACKUP, IMPORT, TEST ROLLOVER) -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div>
+          <h3 class="font-bold text-base text-[var(--foreground)]">Settings, Rollover & Data Backup</h3>
+          <p class="text-xs text-[var(--muted-foreground)]">Manage automatic refresh cadences and JSON exports</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- Rollover Testing Section -->
+        <div class="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span class="font-bold text-[var(--foreground)]">Automatic Cadence Refreshing</span>
+          </div>
+          <p class="text-[var(--muted-foreground)]">Tasks automatically reset when midnight strikes (Daily), each Sunday/Monday (Weekly), each 1st of month (Monthly), and each Jan 1st (Yearly). All past records are stored forever in your history.</p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="testAdvanceDay()" class="px-2.5 py-1.5 rounded-lg bg-amber-500 text-black font-semibold hover:opacity-90 transition text-xs shadow-sm">
+              Simulate Daily Rollover (Next Day)
+            </button>
+            <button onclick="testAdvanceWeek()" class="px-2.5 py-1.5 rounded-lg bg-[var(--content)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--card)] transition text-xs">
+              Simulate Weekly Rollover
+            </button>
+          </div>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-3">
+          <span class="font-bold text-[var(--foreground)] block">Data Portability (JSON)</span>
+          <p class="text-[var(--muted-foreground)]">Export all task templates, current active instances, notes, and complete historical archives to a single JSON file.</p>
+          <div class="flex items-center gap-3">
+            <button onclick="exportDataJSON()" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white font-medium hover:opacity-90 transition text-xs flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Export JSON Backup
+            </button>
+            <label class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] font-medium hover:bg-[var(--content)] transition text-xs cursor-pointer flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              Import JSON Backup
+              <input type="file" id="jsonImportInput" accept=".json" onchange="importDataJSON(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset Demo Data -->
+        <div class="p-3.5 rounded-xl border border-red-500/20 bg-red-500/5 flex items-center justify-between">
+          <div>
+            <span class="font-bold text-red-400 block">Reset to Sample Template Data</span>
+            <span class="text-[11px] text-[var(--muted-foreground)]">Reload starter tasks and historical records</span>
+          </div>
+          <button onclick="confirmResetDemoData()" class="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 font-medium transition text-xs">
+            Reset Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- XTILES INTEGRATION & LINKING MODAL -->
+  <div id="xtilesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow">
+            xT
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-[var(--foreground)]">xTiles Dashboard Sync & Page Linking</h3>
+            <p class="text-xs text-[var(--muted-foreground)]">Populate your xTiles workspace and link across pages and groups</p>
+          </div>
+        </div>
+        <button onclick="closeXTilesModal()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs inside Modal -->
+      <div class="flex border-b border-[var(--border)] space-x-2 text-xs">
+        <button id="xtTabBtn1" onclick="switchXTilesTab(1)" class="pb-2 font-semibold text-purple-400 border-b-2 border-purple-500 transition">
+          1. Copy Tasks to xTiles
+        </button>
+        <button id="xtTabBtn2" onclick="switchXTilesTab(2)" class="pb-2 font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          2. Link Pages & Groups
+        </button>
+        <button id="xtTabBtn3" onclick="switchXTilesTab(3)" class="pb-2 font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          3. Structure & Embed
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 text-xs space-y-4">
+        
+        <!-- PANEL 1: COPY TASKS FOR XTILES -->
+        <div id="xtPanel1" class="space-y-4">
+          <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-300">
+            <span class="font-bold block mb-1">💡 How to paste into xTiles:</span>
+            <span>Select the cadence below, click <strong>"Copy xTiles Markdown"</strong>, open your xTiles page, click inside any Tile block, and press <kbd class="px-1.5 py-0.5 rounded bg-purple-900/60 font-mono text-[10px]">Ctrl + V</kbd>. xTiles automatically converts them into interactive task checkboxes and tags!</span>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <label class="font-medium text-[var(--foreground)]">Cadence to Copy:</label>
+              <select id="xtCadenceSelect" onchange="updateXTilesMarkdownPreview()" class="bg-[var(--content)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+                <option value="all">All Cadences (Daily, Weekly, Monthly, Yearly)</option>
+                <option value="daily">Daily Tasks Only</option>
+                <option value="weekly">Weekly Tasks Only</option>
+                <option value="monthly">Monthly Tasks Only</option>
+                <option value="yearly">Yearly Tasks Only</option>
+              </select>
+            </div>
+            <button id="copyXTilesBtn" onclick="copyXTilesMarkdownToClipboard()" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold hover:opacity-90 flex items-center gap-1.5 shadow-sm transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              <span>Copy for xTiles</span>
+            </button>
+          </div>
+
+          <!-- Markdown Preview Container -->
+          <div class="relative">
+            <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] mb-1">
+              <span>xTiles Ready-to-Paste Markdown Format:</span>
+              <span id="copyConfirmNotice" class="text-emerald-400 font-semibold hidden">Copied to clipboard! Ready to paste into xTiles.</span>
+            </div>
+            <textarea id="xtilesMarkdownPreview" readonly rows="8" class="w-full bg-[var(--content)] border border-[var(--border)] rounded-xl p-3 font-mono text-[11px] text-[var(--foreground)] focus:outline-none custom-scrollbar leading-relaxed"></textarea>
+          </div>
+        </div>
+
+        <!-- PANEL 2: HOW TO LINK TO OTHER GROUPS / PAGES IN XTILES -->
+        <div id="xtPanel2" class="hidden space-y-4">
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">@</span>
+              <span class="font-bold text-[var(--foreground)]">1. Use '@' Mentions for Instant Cross-Page Backlinks</span>
+            </div>
+            <p class="text-[var(--muted-foreground)] leading-relaxed">
+              Inside any task or note in xTiles, type <kbd class="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)] font-mono font-bold text-[10px]">@</kbd> followed by the name of another page or project (e.g. <code class="text-blue-400">@Sprint Goals</code>, <code class="text-blue-400">@Client Deliverables</code>, or <code class="text-blue-400">@Budget 2026</code>).
+            </p>
+            <p class="text-[var(--muted-foreground)] text-[11px]">
+              This creates a two-way clickable link: clicking it instantly opens that project, and xTiles automatically tracks the backlink.
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">⎘</span>
+              <span class="font-bold text-[var(--foreground)]">2. Paste as Linked Page (Synchronized Across Projects)</span>
+            </div>
+            <p class="text-[var(--muted-foreground)] leading-relaxed">
+              If you want your Tasks Dashboard to exist in multiple project workspaces simultaneously:
+            </p>
+            <ol class="list-decimal list-inside text-[var(--muted-foreground)] space-y-1 ml-1">
+              <li>In your xTiles tab or page list, right-click your Tasks page and click <strong>Copy</strong>.</li>
+              <li>Navigate to your other project workspace/group.</li>
+              <li>Right-click in the tab bar and select <strong>"Paste as Linked Page"</strong>.</li>
+            </ol>
+            <p class="text-emerald-400 text-[11px] font-medium">
+              ✓ Any task you check off or edit in one place will immediately sync across all linked pages!
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">🗂</span>
+              <span class="font-bold text-[var(--foreground)]">3. Create Subpages Inside Tiles (`/page`)</span>
+            </div>
+            <p class="text-[var(--muted-foreground)] leading-relaxed">
+              To keep each tile uncluttered while attaching extensive project documentation:
+            </p>
+            <p class="text-[var(--muted-foreground)]">
+              Click in any tile, type <kbd class="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)] font-mono font-bold text-[10px]">/page</kbd> and press Enter. This creates a nested subpage block inside that tile (e.g. for "Monthly Budget Breakdown" or "Sprint Retrospective Notes").
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">📅</span>
+              <span class="font-bold text-[var(--foreground)]">4. Central Aggregation: "My Planner" & "Task Collection"</span>
+            </div>
+            <p class="text-[var(--muted-foreground)] leading-relaxed">
+              Whenever you add tasks in xTiles with due dates or recurring labels, click the <strong>Task Panel</strong> icon in xTiles' left sidebar or open <strong>My Planner</strong>. All tasks from all your tiles, groups, and pages are centralized in a single filterable view!
+            </p>
+          </div>
+        </div>
+
+        <!-- PANEL 3: RECOMMENDED XTILES CANVAS LAYOUT -->
+        <div id="xtPanel3" class="hidden space-y-4">
+          <div class="p-3 bg-[var(--content)] rounded-xl border border-[var(--border)] space-y-2">
+            <span class="font-bold text-[var(--foreground)] block">Recommended xTiles Tile Setup:</span>
+            <p class="text-[var(--muted-foreground)]">Create a new page in xTiles called <strong>"Pulse Pro Tasks"</strong> and arrange 4 tiles side-by-side or in a 2x2 grid:</p>
+            
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <div class="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5">
+                <span class="font-bold text-emerald-400 block text-xs">Tile 1: Daily Habits & Priorities</span>
+                <span class="text-[11px] text-[var(--muted-foreground)]">Tasks done daily. Resets daily. Contains @daily links.</span>
+              </div>
+              <div class="p-2.5 rounded-lg border border-blue-500/30 bg-blue-500/5">
+                <span class="font-bold text-blue-400 block text-xs">Tile 2: Weekly Sprints</span>
+                <span class="text-[11px] text-[var(--muted-foreground)]">Sprint reviews, 1-on-1s. Contains subpages for retrospectives.</span>
+              </div>
+              <div class="p-2.5 rounded-lg border border-purple-500/30 bg-purple-500/5">
+                <span class="font-bold text-purple-400 block text-xs">Tile 3: Monthly Milestones</span>
+                <span class="text-[11px] text-[var(--muted-foreground)]">Finance, audits, metrics. Linked to monthly planning docs.</span>
+              </div>
+              <div class="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <span class="font-bold text-amber-400 block text-xs">Tile 4: Annual OKRs</span>
+                <span class="text-[11px] text-[var(--muted-foreground)]">Long-term vision, health, taxes. Linked to annual roadmap.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--content)] space-y-2">
+            <span class="font-bold text-[var(--foreground)] block">Embedding this Live Dashboard into xTiles:</span>
+            <p class="text-[var(--muted-foreground)] leading-relaxed">
+              If you host this project online (e.g. GitHub Pages or Vercel) or run a local server:
+            </p>
+            <ol class="list-decimal list-inside text-[var(--muted-foreground)] space-y-1">
+              <li>Type <kbd class="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)] font-mono text-[10px]">/embed</kbd> inside an xTiles tile.</li>
+              <li>Paste the web URL of your dashboard.</li>
+              <li>xTiles will render the live interactive stopwatches, history explorer, and progress rings directly inside your xTiles page!</li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end pt-3 border-t border-[var(--border)]">
+        <button type="button" onclick="closeXTilesModal()" class="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white hover:opacity-90 transition text-xs font-medium">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* =========================================================
+       CADENCETASK CORE ENGINE
+       Handles:
+       - Template Management
+       - Automatic Cadence Period Checks & Rollovers
+       - Active Stopwatches & Timers
+       - Time to Completion Tracking (Average, Total)
+       - Completion Rate Calculations
+       - Per-Period Note Attachments
+       - Historical Archives
+       ========================================================= */
+
+    const STORAGE_KEY = 'cadencetask_db_v1';
+    let appState = null;
+    let timerInterval = null;
+    let clockInterval = null;
+    let activeTab = 'all'; // 'all', 'daily', 'weekly', 'monthly', 'yearly', 'history'
+    let currentEditingNote = null; // { cadence, periodKey, taskId }
+
+    // --- DATE & PERIOD KEY HELPERS ---
+    function getTodayDate() {
+      // Allows testing simulated dates if stored in appState
+      if (appState && appState.simulatedDate) {
+        return new Date(appState.simulatedDate);
+      }
+      return new Date();
+    }
+
+    function formatDateISO(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getDailyPeriodKey(date) {
+      return formatDateISO(date);
+    }
+
+    function getWeeklyPeriodKey(date) {
+      // ISO week calculation
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    }
+
+    function getMonthlyPeriodKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+
+    function getYearlyPeriodKey(date) {
+      return `${date.getFullYear()}`;
+    }
+
+    function getCurrentPeriodKey(cadence, date = getTodayDate()) {
+      switch (cadence) {
+        case 'daily': return getDailyPeriodKey(date);
+        case 'weekly': return getWeeklyPeriodKey(date);
+        case 'monthly': return getMonthlyPeriodKey(date);
+        case 'yearly': return getYearlyPeriodKey(date);
+      }
+    }
+
+    // --- DEFAULT STARTER DATA ---
+    function getDefaultState() {
+      const now = new Date();
+      const dailyKey = getDailyPeriodKey(now);
+      const weeklyKey = getWeeklyPeriodKey(now);
+      const monthlyKey = getMonthlyPeriodKey(now);
+      const yearlyKey = getYearlyPeriodKey(now);
+
+      const templates = [
+        // Daily Tasks
+        { id: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', estimatedMinutes: 20, tags: ['Focus', 'Work'], notes: 'Review high-priority tasks and calendar commitments.' },
+        { id: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', estimatedMinutes: 90, tags: ['Deep Work'], notes: 'Zero distractions, do not open email/chat.' },
+        { id: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', estimatedMinutes: 30, tags: ['Admin'], notes: 'Triage team pings, client messages, and follow-ups.' },
+        { id: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', estimatedMinutes: 15, tags: ['Reflection'], notes: 'Record completed wins and note tomorrow priorities.' },
+
+        // Weekly Tasks
+        { id: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', estimatedMinutes: 45, tags: ['Review'], notes: 'Audit weekly deliverables vs targets.' },
+        { id: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', estimatedMinutes: 30, tags: ['Organization'], notes: 'Clear downloads folder, archive old project tabs.' },
+        { id: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', estimatedMinutes: 60, tags: ['Team'], notes: 'Weekly alignment check-ins.' },
+
+        // Monthly Tasks
+        { id: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', estimatedMinutes: 60, tags: ['Finance'], notes: 'Reconcile invoices, subscriptions, and budget goals.' },
+        { id: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', estimatedMinutes: 30, tags: ['Ops'], notes: 'Verify automated snapshots and clean credentials.' },
+        { id: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', estimatedMinutes: 45, tags: ['Life'], notes: 'Review habits, reading targets, and health metrics.' },
+
+        // Yearly Tasks
+        { id: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', estimatedMinutes: 180, tags: ['Strategy'], notes: 'Synthesize year milestones and define 1-year and 3-year targets.' },
+        { id: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', estimatedMinutes: 120, tags: ['Finance'], notes: 'Collect documents, receipts, and file annual returns.' },
+        { id: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', estimatedMinutes: 90, tags: ['Health'], notes: 'Schedule doctor appointments, dental, and comprehensive lab tests.' }
+      ];
+
+      // Build active current periods
+      const activePeriods = {
+        daily: {
+          periodKey: dailyKey,
+          tasks: [
+            { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: new Date(now.getTime() - 2 * 3600000).toISOString(), timeSpentSeconds: 1200, notes: 'Completed in 20m. Planned top 3 deliverables.', status: 'completed' },
+            { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: new Date(now.getTime() - 1 * 3600000).toISOString(), timeSpentSeconds: 4500, notes: 'Finished the architecture specification for the task tracker.', status: 'completed' },
+            { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 600, notes: 'Inbox cleared to 5 emails remaining.', status: 'in_progress' },
+            { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
+          ]
+        },
+        weekly: {
+          periodKey: weeklyKey,
+          tasks: [
+            { taskId: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', completed: true, completedAt: new Date(now.getTime() - 24 * 3600000).toISOString(), timeSpentSeconds: 2700, notes: 'Sprint completed at 92% velocity.', status: 'completed' },
+            { taskId: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' },
+            { taskId: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', completed: false, completedAt: null, timeSpentSeconds: 1800, notes: 'Had 2 of 3 check-ins.', status: 'in_progress' }
+          ]
+        },
+        monthly: {
+          periodKey: monthlyKey,
+          tasks: [
+            { taskId: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', completed: true, completedAt: new Date(now.getTime() - 48 * 3600000).toISOString(), timeSpentSeconds: 3600, notes: 'All accounts balanced.', status: 'completed' },
+            { taskId: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', completed: true, completedAt: new Date(now.getTime() - 36 * 3600000).toISOString(), timeSpentSeconds: 1800, notes: 'Snapshots checked and verified clean.', status: 'completed' },
+            { taskId: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
+          ]
+        },
+        yearly: {
+          periodKey: yearlyKey,
+          tasks: [
+            { taskId: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', completed: true, completedAt: new Date(now.getTime() - 100 * 86400000).toISOString(), timeSpentSeconds: 10800, notes: 'Annual goals locked in Q1.', status: 'completed' },
+            { taskId: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', completed: true, completedAt: new Date(now.getTime() - 60 * 86400000).toISOString(), timeSpentSeconds: 7200, notes: 'Filed with certified accountant.', status: 'completed' },
+            { taskId: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
+          ]
+        }
+      };
+
+      // Past historical archive samples so the history explorer is immediately rich
+      const yesterday = new Date(now.getTime() - 86400000);
+      const yesterdayKey = getDailyPeriodKey(yesterday);
+      const twoDaysAgo = new Date(now.getTime() - 2 * 86400000);
+      const twoDaysAgoKey = getDailyPeriodKey(twoDaysAgo);
+
+      const history = {
+        daily: {
+          [yesterdayKey]: {
+            periodKey: yesterdayKey,
+            cadence: 'daily',
+            archivedAt: yesterday.toISOString(),
+            summary: { totalTasks: 4, completedTasks: 4, completionRate: 100, avgTimeToCompletionMinutes: 38, totalTimeSpentMinutes: 155 },
+            tasks: [
+              { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 1200, notes: 'Smooth morning kickoff.', status: 'completed' },
+              { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 5400, notes: 'Crushed the sprint code review and pull requests.', status: 'completed' },
+              { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 1800, notes: 'Zero backlog by 4 PM.', status: 'completed' },
+              { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 900, notes: 'Everything organized for today.', status: 'completed' }
+            ]
+          },
+          [twoDaysAgoKey]: {
+            periodKey: twoDaysAgoKey,
+            cadence: 'daily',
+            archivedAt: twoDaysAgo.toISOString(),
+            summary: { totalTasks: 4, completedTasks: 3, completionRate: 75, avgTimeToCompletionMinutes: 42, totalTimeSpentMinutes: 125 },
+            tasks: [
+              { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 1500, notes: 'Identified 2 critical bugs.', status: 'completed' },
+              { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 4800, notes: 'Bugfix deployment.', status: 'completed' },
+              { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 1200, notes: 'Handled emergency client ticket.', status: 'completed' },
+              { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 0, notes: 'Missed evening shutdown due to late dinner.', status: 'pending' }
+            ]
+          }
+        },
+        weekly: {
+          '2026-W43': {
+            periodKey: '2026-W43',
+            cadence: 'weekly',
+            archivedAt: new Date(now.getTime() - 7 * 86400000).toISOString(),
+            summary: { totalTasks: 3, completedTasks: 3, completionRate: 100, avgTimeToCompletionMinutes: 40, totalTimeSpentMinutes: 120 },
+            tasks: [
+              { taskId: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', completed: true, timeSpentSeconds: 2400, notes: 'Met all sprint goals on time.', status: 'completed' },
+              { taskId: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', completed: true, timeSpentSeconds: 1800, notes: 'Desktop organized and archived.', status: 'completed' },
+              { taskId: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', completed: true, timeSpentSeconds: 3000, notes: 'Great team momentum.', status: 'completed' }
+            ]
+          }
+        },
+        monthly: {
+          '2026-09': {
+            periodKey: '2026-09',
+            cadence: 'monthly',
+            archivedAt: '2026-10-01T00:00:00.000Z',
+            summary: { totalTasks: 3, completedTasks: 2, completionRate: 67, avgTimeToCompletionMinutes: 45, totalTimeSpentMinutes: 90 },
+            tasks: [
+              { taskId: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', completed: true, timeSpentSeconds: 3600, notes: 'Profitable month by 14%.', status: 'completed' },
+              { taskId: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', completed: true, timeSpentSeconds: 1800, notes: 'Rotated API keys.', status: 'completed' },
+              { taskId: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', completed: false, timeSpentSeconds: 0, notes: 'Deferred to October.', status: 'pending' }
+            ]
+          }
+        },
+        yearly: {
+          '2025': {
+            periodKey: '2025',
+            cadence: 'yearly',
+            archivedAt: '2026-01-01T00:00:00.000Z',
+            summary: { totalTasks: 3, completedTasks: 3, completionRate: 100, avgTimeToCompletionMinutes: 120, totalTimeSpentMinutes: 360 },
+            tasks: [
+              { taskId: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', completed: true, timeSpentSeconds: 9000, notes: 'Completed 2025 company roadmap.', status: 'completed' },
+              { taskId: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', completed: true, timeSpentSeconds: 7200, notes: '2024 returns audited and settled.', status: 'completed' },
+              { taskId: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', completed: true, timeSpentSeconds: 5400, notes: 'Clean bill of health.', status: 'completed' }
+            ]
+          }
+        }
+      };
+
+      return {
+        templates,
+        activePeriods,
+        history,
+        simulatedDate: null,
+        theme: 'dark'
+      };
+    }
+
+    // --- DUAL-ENGINE STORAGE MANAGEMENT (LocalStorage + IndexedDB) ---
+    const DB_NAME = 'PulseProTaskDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'app_state';
+
+    function openIndexedDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) {
+          resolve(null);
+          return;
+        }
+        try {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME);
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function saveToIndexedDB(state) {
+      try {
+        const db = await openIndexedDB();
+        if (!db) return false;
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          tx.objectStore(STORE_NAME).put(state, 'current');
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (err) {
+        return false;
+      }
+    }
+
+    async function loadFromIndexedDB() {
+      try {
+        const db = await openIndexedDB();
+        if (!db) return null;
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const req = tx.objectStore(STORE_NAME).get('current');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function updateStorageStatusIndicator(saved = true, msg = 'Auto-Saved') {
+      const textEl = document.getElementById('storageStatusText');
+      const pillEl = document.getElementById('storageStatusPill');
+      if (textEl && pillEl) {
+        if (saved) {
+          textEl.innerText = msg;
+          pillEl.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium';
+        } else {
+          textEl.innerText = 'Storage Warning';
+          pillEl.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-medium';
+          pillEl.title = 'Browser may clear file:// storage on exit. Deploy to GitHub Pages or export JSON backup.';
+        }
+      }
+    }
+
+    async function loadState() {
+      let loaded = null;
+
+      // 1. Try LocalStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          loaded = JSON.parse(raw);
+        }
+      } catch (e) {
+        console.warn('LocalStorage unavailable or restricted on file:// URL:', e);
+      }
+
+      // 2. If LocalStorage was empty or wiped, fallback to IndexedDB
+      if (!loaded || !loaded.templates) {
+        const idbState = await loadFromIndexedDB();
+        if (idbState && idbState.templates) {
+          loaded = idbState;
+          console.info('State successfully restored from IndexedDB persistent storage!');
+        }
+      }
+
+      if (loaded && loaded.templates && loaded.activePeriods && loaded.history) {
+        appState = loaded;
+      } else {
+        appState = getDefaultState();
+        saveState();
+      }
+
+      updateStorageStatusIndicator(true, 'Data Ready');
+    }
+
+    function saveState() {
+      let lsSuccess = false;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        lsSuccess = true;
+      } catch (e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+
+      // Simultaneously write to IndexedDB
+      saveToIndexedDB(appState).then((idbSuccess) => {
+        updateStorageStatusIndicator(lsSuccess || idbSuccess, 'Auto-Saved');
+      });
+    }
+
+    // --- CADENCE REFRESH & HISTORY ARCHIVING LOGIC ---
+    // This is the core requirement: refresh at the correct time but keep historical data.
+    function checkCadenceRollovers() {
+      const now = getTodayDate();
+      const cadences = ['daily', 'weekly', 'monthly', 'yearly'];
+      let rolloverOccurred = false;
+      let rolledCadences = [];
+
+      cadences.forEach(cadence => {
+        const currentPeriodKey = getCurrentPeriodKey(cadence, now);
+        const activePeriod = appState.activePeriods[cadence];
+
+        if (activePeriod && activePeriod.periodKey !== currentPeriodKey) {
+          // Period has expired! Archive previous period to history.
+          archivePeriod(cadence, activePeriod);
+
+          // Instantiate new clean period for current templates
+          const newTasks = appState.templates
+            .filter(t => t.cadence === cadence)
+            .map(t => ({
+              taskId: t.id,
+              title: t.title,
+              cadence: t.cadence,
+              completed: false,
+              completedAt: null,
+              timeSpentSeconds: 0,
+              notes: '',
+              status: 'pending'
+            }));
+
+          appState.activePeriods[cadence] = {
+            periodKey: currentPeriodKey,
+            tasks: newTasks
+          };
+
+          rolloverOccurred = true;
+          rolledCadences.push(cadence.toUpperCase());
+        }
+      });
+
+      if (rolloverOccurred) {
+        saveState();
+        showRolloverNotification(`Cadence refreshed: ${rolledCadences.join(', ')} tasks have rolled over to the new period. All past tasks, completion rates, and notes were preserved in History!`);
+        renderAll();
+      }
+    }
+
+    function archivePeriod(cadence, periodRecord) {
+      if (!appState.history[cadence]) {
+        appState.history[cadence] = {};
+      }
+
+      // Calculate finalized period summary
+      const tasks = periodRecord.tasks || [];
+      const totalTasks = tasks.length;
+      const completedTasks = tasks.filter(t => t.completed).length;
+      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      
+      const completedWithTime = tasks.filter(t => t.completed && t.timeSpentSeconds > 0);
+      const totalSeconds = tasks.reduce((sum, t) => sum + (t.timeSpentSeconds || 0), 0);
+      const avgSeconds = completedWithTime.length > 0 
+        ? Math.round(completedWithTime.reduce((sum, t) => sum + t.timeSpentSeconds, 0) / completedWithTime.length)
+        : 0;
+
+      const summary = {
+        totalTasks,
+        completedTasks,
+        completionRate,
+        avgTimeToCompletionMinutes: Math.round(avgSeconds / 60),
+        totalTimeSpentMinutes: Math.round(totalSeconds / 60)
+      };
+
+      appState.history[cadence][periodRecord.periodKey] = {
+        periodKey: periodRecord.periodKey,
+        cadence,
+        archivedAt: new Date().toISOString(),
+        summary,
+        tasks: JSON.parse(JSON.stringify(tasks))
+      };
+    }
+
+    function showRolloverNotification(msg) {
+      const banner = document.getElementById('rolloverNotice');
+      const text = document.getElementById('rolloverNoticeText');
+      if (banner && text) {
+        text.innerText = msg;
+        banner.classList.remove('hidden');
+      }
+    }
+
+    // --- REFRESH COUNTDOWN CALCULATOR ---
+    function updateRefreshCountdown() {
+      const now = getTodayDate();
+      
+      // Calculate time until next midnight
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+      const diffMs = tomorrow - now;
+      if (diffMs <= 0) {
+        checkCadenceRollovers();
+        return;
+      }
+
+      const hours = Math.floor(diffMs / 3600000);
+      const mins = Math.floor((diffMs % 3600000) / 60000);
+      const secs = Math.floor((diffMs % 60000) / 1000);
+
+      const countdownEl = document.getElementById('nextRefreshCountdown');
+      if (countdownEl) {
+        countdownEl.innerText = `Daily reset in ${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      // Also update top header clock
+      const clockEl = document.getElementById('headerClock');
+      const dateEl = document.getElementById('headerDate');
+      if (clockEl) {
+        clockEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+      if (dateEl) {
+        dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+    }
+
+    // --- ACTIVE STOPWATCH ENGINE ---
+    const runningTimers = {}; // { taskId: { intervalId, startTime, baseSeconds, cadence } }
+
+    function toggleTaskTimer(cadence, taskId) {
+      if (runningTimers[taskId]) {
+        // Stop timer
+        stopTaskTimer(taskId);
+      } else {
+        // Start timer
+        startTaskTimer(cadence, taskId);
+      }
+      renderBoard();
+      updateMetricsDashboard();
+    }
+
+    function startTaskTimer(cadence, taskId) {
+      const task = getTaskInstance(cadence, taskId);
+      if (!task) return;
+
+      const baseSeconds = task.timeSpentSeconds || 0;
+      const startTime = Date.now();
+
+      task.status = 'in_progress';
+
+      const intervalId = setInterval(() => {
+        const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+        task.timeSpentSeconds = baseSeconds + elapsedSec;
+        updateTimerDisplay(taskId, task.timeSpentSeconds);
+      }, 1000);
+
+      runningTimers[taskId] = { intervalId, startTime, baseSeconds, cadence };
+    }
+
+    function stopTaskTimer(taskId) {
+      const timer = runningTimers[taskId];
+      if (timer) {
+        clearInterval(timer.intervalId);
+        const task = getTaskInstance(timer.cadence, taskId);
+        if (task) {
+          const elapsedSec = Math.floor((Date.now() - timer.startTime) / 1000);
+          task.timeSpentSeconds = timer.baseSeconds + elapsedSec;
+        }
+        delete runningTimers[taskId];
+        saveState();
+      }
+    }
+
+    function updateTimerDisplay(taskId, seconds) {
+      const el = document.getElementById(`timerDisplay-${taskId}`);
+      if (el) {
+        el.innerText = formatDuration(seconds);
+      }
+    }
+
+    function getTaskInstance(cadence, taskId) {
+      const period = appState.activePeriods[cadence];
+      if (!period) return null;
+      return period.tasks.find(t => t.taskId === taskId);
+    }
+
+    // --- TASK COMPLETION & METRICS ---
+    function toggleTaskCompletion(cadence, taskId) {
+      const task = getTaskInstance(cadence, taskId);
+      if (!task) return;
+
+      if (runningTimers[taskId]) {
+        stopTaskTimer(taskId);
+      }
+
+      task.completed = !task.completed;
+      if (task.completed) {
+        task.completedAt = new Date().toISOString();
+        task.status = 'completed';
+        // If no time was logged, prompt or default to estimated minutes if present
+        if (task.timeSpentSeconds === 0) {
+          const tmpl = appState.templates.find(t => t.id === taskId);
+          if (tmpl && tmpl.estimatedMinutes) {
+            task.timeSpentSeconds = tmpl.estimatedMinutes * 60;
+          }
+        }
+      } else {
+        task.completedAt = null;
+        task.status = task.timeSpentSeconds > 0 ? 'in_progress' : 'pending';
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    function formatDuration(totalSeconds) {
+      if (!totalSeconds || totalSeconds < 0) return '0m';
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+      }
+      return `${seconds}s`;
+    }
+
+    function formatDurationMinutes(minutes) {
+      if (!minutes || minutes <= 0) return '0 min';
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m} min`;
+    }
+
+    // --- METRICS CALCULATION ---
+    function calculateActiveMetrics(targetCadence = 'all') {
+      const cadences = targetCadence === 'all' ? ['daily', 'weekly', 'monthly', 'yearly'] : [targetCadence];
+      let allTasks = [];
+
+      cadences.forEach(c => {
+        const period = appState.activePeriods[c];
+        if (period && period.tasks) {
+          allTasks = allTasks.concat(period.tasks);
+        }
+      });
+
+      const totalTasks = allTasks.length;
+      const completedTasks = allTasks.filter(t => t.completed).length;
+      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      const completedWithTime = allTasks.filter(t => t.completed && t.timeSpentSeconds > 0);
+      const totalSeconds = allTasks.reduce((sum, t) => sum + (t.timeSpentSeconds || 0), 0);
+      const avgSeconds = completedWithTime.length > 0
+        ? Math.round(completedWithTime.reduce((sum, t) => sum + t.timeSpentSeconds, 0) / completedWithTime.length)
+        : 0;
+
+      return {
+        totalTasks,
+        completedTasks,
+        completionRate,
+        avgMinutes: Math.round(avgSeconds / 60),
+        totalMinutes: Math.round(totalSeconds / 60),
+        activeTimersCount: Object.keys(runningTimers).length
+      };
+    }
+
+    function updateMetricsDashboard() {
+      const overall = calculateActiveMetrics(activeTab === 'history' ? 'all' : activeTab);
+      
+      const compRateEl = document.getElementById('metricCompletionRate');
+      const countsEl = document.getElementById('metricTaskCounts');
+      const rateBadgeEl = document.getElementById('rateBadge');
+      const progressBar = document.getElementById('progressBarRate');
+      
+      if (compRateEl) compRateEl.innerText = `${overall.completionRate}%`;
+      if (countsEl) countsEl.innerText = `${overall.completedTasks} of ${overall.totalTasks} completed`;
+      if (rateBadgeEl) rateBadgeEl.innerText = `${overall.completionRate}%`;
+      if (progressBar) progressBar.style.width = `${overall.completionRate}%`;
+
+      const avgTimeEl = document.getElementById('metricAvgTime');
+      if (avgTimeEl) avgTimeEl.innerText = formatDurationMinutes(overall.avgMinutes);
+
+      const totalTimeEl = document.getElementById('metricTotalTime');
+      if (totalTimeEl) totalTimeEl.innerText = formatDurationMinutes(overall.totalMinutes);
+
+      const activeTimersEl = document.getElementById('metricActiveTimers');
+      if (activeTimersEl) {
+        const count = Object.keys(runningTimers).length;
+        activeTimersEl.innerText = count > 0 ? `${count} active stopwatch running` : 'No active timers running';
+      }
+
+      // Mini cards per cadence
+      ['daily', 'weekly', 'monthly', 'yearly'].forEach(c => {
+        const stats = calculateActiveMetrics(c);
+        const miniEl = document.getElementById(`rate${c.charAt(0).toUpperCase() + c.slice(1)}Mini`);
+        if (miniEl) miniEl.innerText = `${stats.completionRate}%`;
+      });
+
+      // Count total archived periods in history
+      let histCount = 0;
+      Object.keys(appState.history).forEach(c => {
+        histCount += Object.keys(appState.history[c] || {}).length;
+      });
+      const histCountEl = document.getElementById('archivedPeriodsCount');
+      if (histCountEl) histCountEl.innerText = `${histCount} historical cycle archives`;
+    }
+
+    // --- BOARD RENDERING ---
+    function renderBoard() {
+      const searchQuery = (document.getElementById('taskSearchInput')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+
+      const cadences = ['daily', 'weekly', 'monthly', 'yearly'];
+
+      cadences.forEach(cadence => {
+        const container = document.getElementById(`taskList-${cadence}`);
+        const colEl = document.getElementById(`col-${cadence}`);
+        if (!container) return;
+
+        // Tab visibility
+        if (activeTab === 'all' || activeTab === cadence) {
+          colEl.classList.remove('hidden');
+        } else {
+          colEl.classList.add('hidden');
+        }
+
+        const period = appState.activePeriods[cadence];
+        if (!period) return;
+
+        // Update column stats & labels
+        const total = period.tasks.length;
+        const done = period.tasks.filter(t => t.completed).length;
+        const colStatsEl = document.getElementById(`${cadence}ColStats`);
+        if (colStatsEl) colStatsEl.innerText = `${done}/${total}`;
+
+        const periodLabelEl = document.getElementById(`${cadence}PeriodLabel`);
+        if (periodLabelEl) periodLabelEl.innerText = period.periodKey;
+
+        const metrics = calculateActiveMetrics(cadence);
+        const avgLabelEl = document.getElementById(`${cadence}AvgTimeLabel`);
+        if (avgLabelEl) avgLabelEl.innerText = `Avg: ${metrics.avgMinutes}m`;
+
+        // Filter tasks
+        const filteredTasks = period.tasks.filter(task => {
+          const tmpl = appState.templates.find(t => t.id === task.taskId) || {};
+          const titleMatch = (task.title || '').toLowerCase().includes(searchQuery);
+          const notesMatch = (task.notes || '').toLowerCase().includes(searchQuery);
+          const tagsMatch = (tmpl.tags || []).some(tag => tag.toLowerCase().includes(searchQuery));
+          
+          if (searchQuery && !titleMatch && !notesMatch && !tagsMatch) return false;
+
+          if (statusFilter === 'pending' && task.completed) return false;
+          if (statusFilter === 'completed' && !task.completed) return false;
+
+          return true;
+        });
+
+        if (filteredTasks.length === 0) {
+          container.innerHTML = `
+            <div class="p-6 text-center text-xs text-[var(--muted-foreground)] border border-dashed border-[var(--border)] rounded-xl">
+              <p>No tasks found.</p>
+              <button onclick="openNewTaskModal('${cadence}')" class="mt-2 text-blue-400 font-semibold hover:underline">+ Add ${cadence} task</button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = filteredTasks.map(task => {
+          const tmpl = appState.templates.find(t => t.id === task.taskId) || {};
+          const isTimerRunning = !!runningTimers[task.taskId];
+          const hasNotes = task.notes && task.notes.trim().length > 0;
+
+          return `
+            <div class="p-3.5 rounded-xl border ${task.completed ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-[var(--border)] bg-[var(--content)]/40'} hover:border-[var(--primary)] transition shadow-sm space-y-2.5">
+              
+              <!-- Title & Checkbox -->
+              <div class="flex items-start justify-between gap-2">
+                <label class="flex items-start gap-2.5 cursor-pointer flex-1 select-none">
+                  <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskCompletion('${cadence}', '${task.taskId}')" class="mt-0.5 rounded border-[var(--border)] text-emerald-500 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer">
+                  <div>
+                    <span class="text-xs font-semibold ${task.completed ? 'line-through text-[var(--muted-foreground)]' : 'text-[var(--foreground)]'} block leading-snug">
+                      ${escapeHtml(task.title)}
+                    </span>
+                    ${tmpl.estimatedMinutes ? `<span class="text-[11px] text-[var(--muted-foreground)]">Est: ${tmpl.estimatedMinutes}m</span>` : ''}
+                  </div>
+                </label>
+
+                <!-- Action Dropdown / Delete -->
+                <button onclick="deleteTaskTemplate('${task.taskId}')" title="Delete Task" class="text-[var(--muted-foreground)] hover:text-red-400 p-0.5 transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+
+              <!-- Tags -->
+              ${tmpl.tags && tmpl.tags.length > 0 ? `
+                <div class="flex flex-wrap gap-1">
+                  ${tmpl.tags.map(tag => `<span class="text-[10px] px-2 py-0.5 rounded-md bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)] font-medium">${escapeHtml(tag)}</span>`).join('')}
+                </div>
+              ` : ''}
+
+              <!-- Time Spent & Active Stopwatch -->
+              <div class="flex items-center justify-between text-xs pt-1 border-t border-[var(--border)]/60">
+                <div class="flex items-center gap-1.5 font-mono">
+                  <svg class="w-3.5 h-3.5 ${isTimerRunning ? 'text-amber-400 animate-pulse' : 'text-[var(--muted-foreground)]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span id="timerDisplay-${task.taskId}" class="text-[11px] font-semibold ${isTimerRunning ? 'text-amber-400' : 'text-[var(--foreground)]'}">
+                    ${formatDuration(task.timeSpentSeconds || 0)}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <!-- Timer Play/Pause Button -->
+                  <button onclick="toggleTaskTimer('${cadence}', '${task.taskId}')" class="px-2 py-0.5 rounded text-[11px] font-medium transition ${isTimerRunning ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--content)]'}">
+                    ${isTimerRunning ? 'Pause' : 'Start'}
+                  </button>
+
+                  <!-- Notes Modal Trigger -->
+                  <button onclick="openNotesModal('${cadence}', '${period.periodKey}', '${task.taskId}')" class="px-2 py-0.5 rounded text-[11px] font-medium border border-[var(--border)] transition ${hasNotes ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]'}" title="Task Notes & Duration">
+                    ${hasNotes ? '📝 Notes' : '+ Note'}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notes Preview if present -->
+              ${hasNotes ? `
+                <div onclick="openNotesModal('${cadence}', '${period.periodKey}', '${task.taskId}')" class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 text-[11px] text-[var(--muted-foreground)] cursor-pointer hover:border-[var(--primary)] transition line-clamp-2">
+                  ${escapeHtml(task.notes)}
+                </div>
+              ` : ''}
+
+            </div>
+          `;
+        }).join('');
+
+      });
+    }
+
+    // --- HISTORY EXPLORER ENGINE ---
+    function renderHistoryExplorer() {
+      const cadence = document.getElementById('historyCadenceFilter')?.value || 'daily';
+      const periodSelector = document.getElementById('historyPeriodSelector');
+      if (!periodSelector) return;
+
+      const periods = Object.keys(appState.history[cadence] || {}).sort().reverse();
+
+      if (periods.length === 0) {
+        periodSelector.innerHTML = '<option value="">No past archives</option>';
+        document.getElementById('historyTasksTableBody').innerHTML = `
+          <tr><td colspan="5" class="p-6 text-center text-xs text-[var(--muted-foreground)]">No archived periods found for ${cadence}. When cycles reset at the scheduled time, past cycles are saved here.</td></tr>
+        `;
+        return;
+      }
+
+      periodSelector.innerHTML = periods.map(p => `
+        <option value="${p}">${p}</option>
+      `).join('');
+
+      loadHistoricalPeriodDetail();
+    }
+
+    function loadHistoricalPeriodDetail() {
+      const cadence = document.getElementById('historyCadenceFilter').value;
+      const periodKey = document.getElementById('historyPeriodSelector').value;
+      if (!periodKey) return;
+
+      const record = appState.history[cadence]?.[periodKey];
+      if (!record) return;
+
+      const badge = document.getElementById('histPeriodBadge');
+      if (badge) badge.innerText = `${cadence.toUpperCase()} • ${periodKey}`;
+
+      const summary = record.summary || {};
+      document.getElementById('histMetricRate').innerText = `${summary.completionRate || 0}%`;
+      document.getElementById('histMetricAvgTime').innerText = `${summary.avgTimeToCompletionMinutes || 0} min`;
+      document.getElementById('histMetricTotalTime').innerText = `${summary.totalTimeSpentMinutes || 0} min`;
+      document.getElementById('histMetricTasksDone').innerText = `${summary.completedTasks || 0} / ${summary.totalTasks || 0}`;
+
+      // Populate archived tasks table
+      const tbody = document.getElementById('historyTasksTableBody');
+      const tasks = record.tasks || [];
+
+      if (tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-[var(--muted-foreground)]">No tasks recorded in this period.</td></tr>`;
+      } else {
+        tbody.innerHTML = tasks.map(t => {
+          return `
+            <tr class="hover:bg-[var(--card)] transition">
+              <td class="py-2.5 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${t.completed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                  ${t.completed ? 'Completed' : 'Missed'}
+                </span>
+              </td>
+              <td class="py-2.5 px-3 font-medium text-[var(--foreground)]">
+                ${escapeHtml(t.title)}
+              </td>
+              <td class="py-2.5 px-3 font-mono text-[var(--muted-foreground)]">
+                ${formatDuration(t.timeSpentSeconds || 0)}
+              </td>
+              <td class="py-2.5 px-3 text-[var(--muted-foreground)]">
+                ${t.completedAt ? new Date(t.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
+              </td>
+              <td class="py-2.5 px-3 text-[var(--muted-foreground)] max-w-xs">
+                ${t.notes ? `<div class="p-1.5 rounded bg-[var(--content)] text-[11px] text-[var(--foreground)]">${escapeHtml(t.notes)}</div>` : '<span class="text-[var(--border)]">No notes</span>'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Render Historical Trend Chart Bars
+      renderTrendChart(cadence);
+    }
+
+    function renderTrendChart(cadence) {
+      const container = document.getElementById('historyTrendBars');
+      if (!container) return;
+
+      const allPeriods = Object.keys(appState.history[cadence] || {}).sort();
+      if (allPeriods.length === 0) {
+        container.innerHTML = `<span class="text-xs text-[var(--muted-foreground)] p-4">No trend data available yet.</span>`;
+        return;
+      }
+
+      container.innerHTML = allPeriods.slice(-8).map(pk => {
+        const item = appState.history[cadence][pk];
+        const rate = item.summary?.completionRate || 0;
+        const height = Math.max(12, Math.round(rate * 1.1));
+        return `
+          <div class="flex flex-col items-center gap-1 shrink-0 w-16">
+            <span class="text-[10px] font-bold text-emerald-400">${rate}%</span>
+            <div class="w-8 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-t transition-all duration-300" style="height: ${height}px"></div>
+            <span class="text-[10px] text-[var(--muted-foreground)] truncate w-full text-center" title="${pk}">${pk}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- TAB SWITCHER ---
+    function setActiveTab(tab) {
+      activeTab = tab;
+      
+      const tabs = ['all', 'daily', 'weekly', 'monthly', 'yearly', 'history'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-white shadow-sm';
+          } else {
+            btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition';
+          }
+        }
+      });
+
+      const activeSec = document.getElementById('activeTasksSection');
+      const histSec = document.getElementById('historySection');
+
+      if (tab === 'history') {
+        activeSec.classList.add('hidden');
+        histSec.classList.remove('hidden');
+        renderHistoryExplorer();
+      } else {
+        activeSec.classList.remove('hidden');
+        histSec.classList.add('hidden');
+        renderBoard();
+      }
+
+      updateMetricsDashboard();
+    }
+
+    // --- MODAL: CREATE / EDIT TASK ---
+    function openNewTaskModal(defaultCadence = 'daily') {
+      document.getElementById('editTaskId').value = '';
+      document.getElementById('taskTitleInput').value = '';
+      document.getElementById('taskCadenceSelect').value = defaultCadence;
+      document.getElementById('taskEstimateInput').value = '';
+      document.getElementById('taskTagsInput').value = '';
+      document.getElementById('taskInitialNotesInput').value = '';
+      document.getElementById('taskModalTitle').innerText = 'Create Recurring Task';
+      document.getElementById('taskModal').classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      document.getElementById('taskModal').classList.add('hidden');
+    }
+
+    function handleSaveTask(event) {
+      event.preventDefault();
+      const id = document.getElementById('editTaskId').value || ('t_' + Date.now());
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const cadence = document.getElementById('taskCadenceSelect').value;
+      const estimatedMinutes = parseInt(document.getElementById('taskEstimateInput').value) || 0;
+      const rawTags = document.getElementById('taskTagsInput').value;
+      const tags = rawTags.split(',').map(s => s.trim()).filter(Boolean);
+      const initialNotes = document.getElementById('taskInitialNotesInput').value.trim();
+
+      // Check if template exists
+      const existingIdx = appState.templates.findIndex(t => t.id === id);
+      const newTmpl = { id, title, cadence, estimatedMinutes, tags, notes: initialNotes };
+
+      if (existingIdx >= 0) {
+        appState.templates[existingIdx] = newTmpl;
+      } else {
+        appState.templates.push(newTmpl);
+        // Also add instance to current active period
+        if (appState.activePeriods[cadence]) {
+          appState.activePeriods[cadence].tasks.push({
+            taskId: id,
+            title,
+            cadence,
+            completed: false,
+            completedAt: null,
+            timeSpentSeconds: 0,
+            notes: initialNotes,
+            status: 'pending'
+          });
+        }
+      }
+
+      saveState();
+      closeTaskModal();
+      renderAll();
+    }
+
+    function deleteTaskTemplate(taskId) {
+      if (!confirm('Are you sure you want to delete this task template? Historical archives will remain intact.')) return;
+      
+      // Stop timer if running
+      if (runningTimers[taskId]) stopTaskTimer(taskId);
+
+      appState.templates = appState.templates.filter(t => t.id !== taskId);
+      // Remove from current active periods
+      ['daily', 'weekly', 'monthly', 'yearly'].forEach(c => {
+        if (appState.activePeriods[c]) {
+          appState.activePeriods[c].tasks = appState.activePeriods[c].tasks.filter(t => t.taskId !== taskId);
+        }
+      });
+
+      saveState();
+      renderAll();
+    }
+
+    // --- MODAL: NOTES & TIME LOG ---
+    function openNotesModal(cadence, periodKey, taskId) {
+      currentEditingNote = { cadence, periodKey, taskId };
+      const task = getTaskInstance(cadence, taskId);
+      if (!task) return;
+
+      document.getElementById('notesModalTaskTitle').innerText = task.title;
+      document.getElementById('notesModalPeriodInfo').innerText = `${cadence.toUpperCase()} • Period: ${periodKey}`;
+      document.getElementById('notesDurationMinutes').value = Math.round((task.timeSpentSeconds || 0) / 60);
+      document.getElementById('notesContentTextarea').value = task.notes || '';
+
+      document.getElementById('notesModal').classList.remove('hidden');
+    }
+
+    function closeNotesModal() {
+      document.getElementById('notesModal').classList.add('hidden');
+      currentEditingNote = null;
+    }
+
+    function saveNotesModal() {
+      if (!currentEditingNote) return;
+      const { cadence, taskId } = currentEditingNote;
+      const task = getTaskInstance(cadence, taskId);
+      if (task) {
+        const mins = parseInt(document.getElementById('notesDurationMinutes').value) || 0;
+        task.timeSpentSeconds = mins * 60;
+        task.notes = document.getElementById('notesContentTextarea').value.trim();
+        saveState();
+      }
+      closeNotesModal();
+      renderAll();
+    }
+
+    // --- SETTINGS, SIMULATION & BACKUP ---
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function testAdvanceDay() {
+      const now = getTodayDate();
+      const nextDay = new Date(now.getTime() + 86400000);
+      appState.simulatedDate = nextDay.toISOString();
+      checkCadenceRollovers();
+      closeSettingsModal();
+      showRolloverNotification(`Advanced simulated time to ${formatDateISO(nextDay)}. Daily tasks refreshed and yesterday was archived!`);
+    }
+
+    function testAdvanceWeek() {
+      const now = getTodayDate();
+      const nextWeek = new Date(now.getTime() + 7 * 86400000);
+      appState.simulatedDate = nextWeek.toISOString();
+      checkCadenceRollovers();
+      closeSettingsModal();
+      showRolloverNotification(`Advanced simulated time to ${formatDateISO(nextWeek)}. Daily & Weekly tasks refreshed!`);
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `cadencetask_backup_${formatDateISO(getTodayDate())}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.templates && imported.activePeriods && imported.history) {
+            appState = imported;
+            saveState();
+            closeSettingsModal();
+            renderAll();
+            alert('Backup successfully imported! All tasks and historical data restored.');
+          } else {
+            alert('Invalid backup file format.');
+          }
+        } catch (err) {
+          alert('Failed to parse JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmResetDemoData() {
+      if (confirm('Reset tracker with sample demo data? Your current state will be overwritten.')) {
+        appState = getDefaultState();
+        saveState();
+        closeSettingsModal();
+        renderAll();
+      }
+    }
+
+    // --- XTILES INTEGRATION ENGINE ---
+    function openXTilesModal() {
+      document.getElementById('xtilesModal').classList.remove('hidden');
+      switchXTilesTab(1);
+      updateXTilesMarkdownPreview();
+    }
+
+    function closeXTilesModal() {
+      document.getElementById('xtilesModal').classList.add('hidden');
+      const notice = document.getElementById('copyConfirmNotice');
+      if (notice) notice.classList.add('hidden');
+    }
+
+    function switchXTilesTab(tabNum) {
+      [1, 2, 3].forEach(n => {
+        const panel = document.getElementById(`xtPanel${n}`);
+        const btn = document.getElementById(`xtTabBtn${n}`);
+        if (n === tabNum) {
+          panel.classList.remove('hidden');
+          btn.className = 'pb-2 font-semibold text-purple-400 border-b-2 border-purple-500 transition';
+        } else {
+          panel.classList.add('hidden');
+          btn.className = 'pb-2 font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition';
+        }
+      });
+    }
+
+    function generateXTilesMarkdown(cadenceChoice = 'all') {
+      const cadences = cadenceChoice === 'all' ? ['daily', 'weekly', 'monthly', 'yearly'] : [cadenceChoice];
+      const titles = {
+        daily: '🟢 DAILY TASKS (Resets Daily)',
+        weekly: '🔵 WEEKLY TASKS (Resets Weekly)',
+        monthly: '🟣 MONTHLY TASKS (Resets Monthly)',
+        yearly: '🟠 YEARLY TASKS (Resets Annually)'
+      };
+
+      let lines = [];
+
+      cadences.forEach(c => {
+        lines.push(`### ${titles[c]}`);
+        const period = appState.activePeriods[c];
+        const tasks = period ? period.tasks : [];
+
+        if (tasks.length === 0) {
+          lines.push(`- (No tasks configured for ${c})`);
+        } else {
+          tasks.forEach(t => {
+            const tmpl = appState.templates.find(item => item.id === t.taskId) || {};
+            const tagStr = (tmpl.tags && tmpl.tags.length > 0) ? tmpl.tags.map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ') : '';
+            const estStr = tmpl.estimatedMinutes ? `(${tmpl.estimatedMinutes}m)` : '';
+            const checked = t.completed ? '[x]' : '[ ]';
+
+            lines.push(`- ${checked} ${t.title} ${tagStr} ${estStr}`.replace(/\s+/g, ' ').trim());
+            if (t.notes && t.notes.trim()) {
+              lines.push(`  - 📝 Notes: ${t.notes.trim()}`);
+            }
+          });
+        }
+        lines.push(''); // blank line between sections
+      });
+
+      return lines.join('\n').trim();
+    }
+
+    function updateXTilesMarkdownPreview() {
+      const choice = document.getElementById('xtCadenceSelect')?.value || 'all';
+      const md = generateXTilesMarkdown(choice);
+      const preview = document.getElementById('xtilesMarkdownPreview');
+      if (preview) {
+        preview.value = md;
+      }
+    }
+
+    function copyXTilesMarkdownToClipboard() {
+      const preview = document.getElementById('xtilesMarkdownPreview');
+      if (!preview) return;
+
+      const finishCopy = () => {
+        const notice = document.getElementById('copyConfirmNotice');
+        if (notice) {
+          notice.classList.remove('hidden');
+          setTimeout(() => notice.classList.add('hidden'), 4000);
+        }
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(preview.value).then(finishCopy).catch(() => {
+          preview.select();
+          document.execCommand('copy');
+          finishCopy();
+        });
+      } else {
+        preview.select();
+        document.execCommand('copy');
+        finishCopy();
+      }
+    }
+
+    // --- THEME ENGINE ---
+    function toggleTheme() {
+      const isLight = document.documentElement.classList.toggle('light');
+      appState.theme = isLight ? 'light' : 'dark';
+      updateThemeIcons();
+      saveState();
+    }
+
+    function updateThemeIcons() {
+      const isLight = document.documentElement.classList.contains('light');
+      document.getElementById('themeIconSun').classList.toggle('hidden', !isLight);
+      document.getElementById('themeIconMoon').classList.toggle('hidden', isLight);
+    }
+
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // --- MAIN INITIALIZER ---
+    function renderAll() {
+      checkCadenceRollovers();
+      renderBoard();
+      updateMetricsDashboard();
+      updateRefreshCountdown();
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadState();
+      
+      if (appState.theme === 'light') {
+        document.documentElement.classList.add('light');
+      }
+      updateThemeIcons();
+
+      renderAll();
+
+      // Setup countdown & rollover check interval
+      clockInterval = setInterval(() => {
+        updateRefreshCountdown();
+      }, 1000);
+
+      // Check cadences every 30 seconds as well
+      setInterval(() => {
+        checkCadenceRollovers();
+      }, 30000);
+    });
+
+    // Auto-save on page exit or tab close
+    window.addEventListener('beforeunload', () => {
+      if (appState) saveState();
+    });
+    window.addEventListener('pagehide', () => {
+      if (appState) saveState();
+    });
+  </script>
+</body>
+</html>
