@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pulse Pro Task Dashboard - Recurring Task & Analytics Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     /* Antigravity semantic tokens fallback if opened in external browser */
@@ -78,7 +79,7 @@
       <!-- Quick Actions / Clock / Mode -->
       <div class="flex items-center space-x-3">
         <!-- Storage Status Pill -->
-        <div id="storageStatusPill" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium" title="Data is saved in local browser storage">
+        <div id="storageStatusPill" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium" title="Data synced to Supabase cloud — live across all devices">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="storageStatusText">Auto-Saved</span>
         </div>
@@ -788,6 +789,45 @@
     let activeTab = 'all'; // 'all', 'daily', 'weekly', 'monthly', 'yearly', 'history'
     let currentEditingNote = null; // { cadence, periodKey, taskId }
 
+    // --- SUPABASE REAL-TIME SYNC ---
+    const SUPABASE_URL = 'https://salwkojlhhkarqcjitsm.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_secret_GfD5QeA3FeKkgPyWGvhMOA_X6I27_Yr';
+    let sbClient = null;
+    let isSyncing = false; // prevent echo-loop on realtime updates
+
+    function initSupabase() {
+      try {
+        sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.info('[Supabase] Client initialized.');
+      } catch (e) {
+        console.warn('[Supabase] Init failed:', e);
+        sbClient = null;
+      }
+    }
+
+    function subscribeToRealtimeUpdates() {
+      if (!sbClient) return;
+      sbClient.channel('pulse-pro-state-sync')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pulse_pro_state'
+        }, (payload) => {
+          if (isSyncing) return; // our own write echoing back
+          const remoteState = payload.new?.state;
+          if (remoteState && remoteState.templates) {
+            console.info('[Supabase] Remote state update received — syncing.');
+            appState = remoteState;
+            // Re-apply running timers that exist locally but not in remote
+            renderAll();
+            updateStorageStatusIndicator(true, 'Live Synced ✓');
+          }
+        })
+        .subscribe((status) => {
+          console.info('[Supabase] Realtime channel status:', status);
+        });
+    }
+
     // --- DATE & PERIOD KEY HELPERS ---
     function getTodayDate() {
       // Allows testing simulated dates if stored in appState
@@ -939,17 +979,38 @@
     async function loadState() {
       let loaded = null;
 
-      // 1. Try LocalStorage
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          loaded = JSON.parse(raw);
+      // 1. Try Supabase (cloud, authoritative source)
+      if (sbClient) {
+        try {
+          updateStorageStatusIndicator(true, 'Connecting…');
+          const { data, error } = await sbClient
+            .from('pulse_pro_state')
+            .select('state')
+            .eq('id', 'singleton')
+            .single();
+          if (!error && data?.state?.templates) {
+            loaded = data.state;
+            console.info('[Supabase] State loaded from cloud.');
+          }
+        } catch (e) {
+          console.warn('[Supabase] Load failed, falling back to local storage:', e);
         }
-      } catch (e) {
-        console.warn('LocalStorage unavailable or restricted on file:// URL:', e);
       }
 
-      // 2. If LocalStorage was empty or wiped, fallback to IndexedDB
+      // 2. Fallback: LocalStorage
+      if (!loaded || !loaded.templates) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            loaded = JSON.parse(raw);
+            console.info('[LocalStorage] State loaded locally.');
+          }
+        } catch (e) {
+          console.warn('LocalStorage unavailable or restricted on file:// URL:', e);
+        }
+      }
+
+      // 3. Fallback: IndexedDB
       if (!loaded || !loaded.templates) {
         const idbState = await loadFromIndexedDB();
         if (idbState && idbState.templates) {
@@ -965,10 +1026,11 @@
         saveState();
       }
 
-      updateStorageStatusIndicator(true, 'Data Ready');
+      updateStorageStatusIndicator(true, sbClient ? 'Cloud Synced ✓' : 'Auto-Saved');
     }
 
-    function saveState() {
+    async function saveState() {
+      // Write to LocalStorage (fast local fallback)
       let lsSuccess = false;
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -977,10 +1039,36 @@
         console.warn('LocalStorage save failed:', e);
       }
 
-      // Simultaneously write to IndexedDB
-      saveToIndexedDB(appState).then((idbSuccess) => {
-        updateStorageStatusIndicator(lsSuccess || idbSuccess, 'Auto-Saved');
-      });
+      // Write to IndexedDB (persistent local fallback)
+      saveToIndexedDB(appState);
+
+      // Write to Supabase (authoritative cloud sync)
+      if (sbClient) {
+        try {
+          isSyncing = true;
+          const { error } = await sbClient
+            .from('pulse_pro_state')
+            .upsert({
+              id: 'singleton',
+              state: appState,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+          if (!error) {
+            updateStorageStatusIndicator(true, 'Cloud Synced ✓');
+          } else {
+            console.warn('[Supabase] Save error:', error);
+            updateStorageStatusIndicator(lsSuccess, lsSuccess ? 'Local Only' : 'Save Failed');
+          }
+        } catch (e) {
+          console.warn('[Supabase] Save exception:', e);
+          updateStorageStatusIndicator(lsSuccess, lsSuccess ? 'Local Only' : 'Save Failed');
+        } finally {
+          // Small delay before clearing isSyncing so realtime echo doesn't trigger renderAll
+          setTimeout(() => { isSyncing = false; }, 2000);
+        }
+      } else {
+        updateStorageStatusIndicator(lsSuccess, 'Auto-Saved');
+      }
     }
 
     // --- CADENCE REFRESH & HISTORY ARCHIVING LOGIC ---
@@ -1856,7 +1944,9 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      initSupabase();
       await loadState();
+      subscribeToRealtimeUpdates();
       
       if (appState.theme === 'light') {
         document.documentElement.classList.add('light');
