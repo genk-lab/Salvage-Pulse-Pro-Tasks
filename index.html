@@ -781,7 +781,7 @@
        - Historical Archives
        ========================================================= */
 
-    const STORAGE_KEY = 'cadencetask_db_v1';
+    const STORAGE_KEY = 'pulsepro_clean_v3';
     let appState = null;
     let timerInterval = null;
     let clockInterval = null;
@@ -837,7 +837,7 @@
       }
     }
 
-    // --- DEFAULT STARTER DATA ---
+    // --- DEFAULT STARTER DATA (CLEAN SLATE - NO DUMMY DATA) ---
     function getDefaultState() {
       const now = new Date();
       const dailyKey = getDailyPeriodKey(now);
@@ -845,151 +845,27 @@
       const monthlyKey = getMonthlyPeriodKey(now);
       const yearlyKey = getYearlyPeriodKey(now);
 
-      const templates = [
-        // Daily Tasks
-        { id: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', estimatedMinutes: 20, tags: ['Focus', 'Work'], notes: 'Review high-priority tasks and calendar commitments.' },
-        { id: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', estimatedMinutes: 90, tags: ['Deep Work'], notes: 'Zero distractions, do not open email/chat.' },
-        { id: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', estimatedMinutes: 30, tags: ['Admin'], notes: 'Triage team pings, client messages, and follow-ups.' },
-        { id: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', estimatedMinutes: 15, tags: ['Reflection'], notes: 'Record completed wins and note tomorrow priorities.' },
-
-        // Weekly Tasks
-        { id: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', estimatedMinutes: 45, tags: ['Review'], notes: 'Audit weekly deliverables vs targets.' },
-        { id: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', estimatedMinutes: 30, tags: ['Organization'], notes: 'Clear downloads folder, archive old project tabs.' },
-        { id: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', estimatedMinutes: 60, tags: ['Team'], notes: 'Weekly alignment check-ins.' },
-
-        // Monthly Tasks
-        { id: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', estimatedMinutes: 60, tags: ['Finance'], notes: 'Reconcile invoices, subscriptions, and budget goals.' },
-        { id: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', estimatedMinutes: 30, tags: ['Ops'], notes: 'Verify automated snapshots and clean credentials.' },
-        { id: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', estimatedMinutes: 45, tags: ['Life'], notes: 'Review habits, reading targets, and health metrics.' },
-
-        // Yearly Tasks
-        { id: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', estimatedMinutes: 180, tags: ['Strategy'], notes: 'Synthesize year milestones and define 1-year and 3-year targets.' },
-        { id: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', estimatedMinutes: 120, tags: ['Finance'], notes: 'Collect documents, receipts, and file annual returns.' },
-        { id: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', estimatedMinutes: 90, tags: ['Health'], notes: 'Schedule doctor appointments, dental, and comprehensive lab tests.' }
-      ];
-
-      // Build active current periods
-      const activePeriods = {
-        daily: {
-          periodKey: dailyKey,
-          tasks: [
-            { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: new Date(now.getTime() - 2 * 3600000).toISOString(), timeSpentSeconds: 1200, notes: 'Completed in 20m. Planned top 3 deliverables.', status: 'completed' },
-            { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: new Date(now.getTime() - 1 * 3600000).toISOString(), timeSpentSeconds: 4500, notes: 'Finished the architecture specification for the task tracker.', status: 'completed' },
-            { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 600, notes: 'Inbox cleared to 5 emails remaining.', status: 'in_progress' },
-            { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
-          ]
-        },
-        weekly: {
-          periodKey: weeklyKey,
-          tasks: [
-            { taskId: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', completed: true, completedAt: new Date(now.getTime() - 24 * 3600000).toISOString(), timeSpentSeconds: 2700, notes: 'Sprint completed at 92% velocity.', status: 'completed' },
-            { taskId: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' },
-            { taskId: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', completed: false, completedAt: null, timeSpentSeconds: 1800, notes: 'Had 2 of 3 check-ins.', status: 'in_progress' }
-          ]
-        },
-        monthly: {
-          periodKey: monthlyKey,
-          tasks: [
-            { taskId: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', completed: true, completedAt: new Date(now.getTime() - 48 * 3600000).toISOString(), timeSpentSeconds: 3600, notes: 'All accounts balanced.', status: 'completed' },
-            { taskId: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', completed: true, completedAt: new Date(now.getTime() - 36 * 3600000).toISOString(), timeSpentSeconds: 1800, notes: 'Snapshots checked and verified clean.', status: 'completed' },
-            { taskId: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
-          ]
-        },
-        yearly: {
-          periodKey: yearlyKey,
-          tasks: [
-            { taskId: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', completed: true, completedAt: new Date(now.getTime() - 100 * 86400000).toISOString(), timeSpentSeconds: 10800, notes: 'Annual goals locked in Q1.', status: 'completed' },
-            { taskId: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', completed: true, completedAt: new Date(now.getTime() - 60 * 86400000).toISOString(), timeSpentSeconds: 7200, notes: 'Filed with certified accountant.', status: 'completed' },
-            { taskId: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', completed: false, completedAt: null, timeSpentSeconds: 0, notes: '', status: 'pending' }
-          ]
-        }
-      };
-
-      // Past historical archive samples so the history explorer is immediately rich
-      const yesterday = new Date(now.getTime() - 86400000);
-      const yesterdayKey = getDailyPeriodKey(yesterday);
-      const twoDaysAgo = new Date(now.getTime() - 2 * 86400000);
-      const twoDaysAgoKey = getDailyPeriodKey(twoDaysAgo);
-
-      const history = {
-        daily: {
-          [yesterdayKey]: {
-            periodKey: yesterdayKey,
-            cadence: 'daily',
-            archivedAt: yesterday.toISOString(),
-            summary: { totalTasks: 4, completedTasks: 4, completionRate: 100, avgTimeToCompletionMinutes: 38, totalTimeSpentMinutes: 155 },
-            tasks: [
-              { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 1200, notes: 'Smooth morning kickoff.', status: 'completed' },
-              { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 5400, notes: 'Crushed the sprint code review and pull requests.', status: 'completed' },
-              { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 1800, notes: 'Zero backlog by 4 PM.', status: 'completed' },
-              { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: true, completedAt: yesterday.toISOString(), timeSpentSeconds: 900, notes: 'Everything organized for today.', status: 'completed' }
-            ]
-          },
-          [twoDaysAgoKey]: {
-            periodKey: twoDaysAgoKey,
-            cadence: 'daily',
-            archivedAt: twoDaysAgo.toISOString(),
-            summary: { totalTasks: 4, completedTasks: 3, completionRate: 75, avgTimeToCompletionMinutes: 42, totalTimeSpentMinutes: 125 },
-            tasks: [
-              { taskId: 't_d1', title: 'Morning Focus & Day Prioritization', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 1500, notes: 'Identified 2 critical bugs.', status: 'completed' },
-              { taskId: 't_d2', title: 'Deep Work Block (60-90m)', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 4800, notes: 'Bugfix deployment.', status: 'completed' },
-              { taskId: 't_d3', title: 'Daily Communication & Inbox Zero', cadence: 'daily', completed: true, completedAt: twoDaysAgo.toISOString(), timeSpentSeconds: 1200, notes: 'Handled emergency client ticket.', status: 'completed' },
-              { taskId: 't_d4', title: 'Evening Log & Daily Shutdown', cadence: 'daily', completed: false, completedAt: null, timeSpentSeconds: 0, notes: 'Missed evening shutdown due to late dinner.', status: 'pending' }
-            ]
-          }
-        },
-        weekly: {
-          '2026-W43': {
-            periodKey: '2026-W43',
-            cadence: 'weekly',
-            archivedAt: new Date(now.getTime() - 7 * 86400000).toISOString(),
-            summary: { totalTasks: 3, completedTasks: 3, completionRate: 100, avgTimeToCompletionMinutes: 40, totalTimeSpentMinutes: 120 },
-            tasks: [
-              { taskId: 't_w1', title: 'Weekly Sprint & Goal Review', cadence: 'weekly', completed: true, timeSpentSeconds: 2400, notes: 'Met all sprint goals on time.', status: 'completed' },
-              { taskId: 't_w2', title: 'Clean Up Workspace & Digital Assets', cadence: 'weekly', completed: true, timeSpentSeconds: 1800, notes: 'Desktop organized and archived.', status: 'completed' },
-              { taskId: 't_w3', title: 'Key Stakeholders & Team 1-on-1s', cadence: 'weekly', completed: true, timeSpentSeconds: 3000, notes: 'Great team momentum.', status: 'completed' }
-            ]
-          }
-        },
-        monthly: {
-          '2026-09': {
-            periodKey: '2026-09',
-            cadence: 'monthly',
-            archivedAt: '2026-10-01T00:00:00.000Z',
-            summary: { totalTasks: 3, completedTasks: 2, completionRate: 67, avgTimeToCompletionMinutes: 45, totalTimeSpentMinutes: 90 },
-            tasks: [
-              { taskId: 't_m1', title: 'Monthly Financials & Budget Reconciliation', cadence: 'monthly', completed: true, timeSpentSeconds: 3600, notes: 'Profitable month by 14%.', status: 'completed' },
-              { taskId: 't_m2', title: 'System Security & Cloud Backup Audit', cadence: 'monthly', completed: true, timeSpentSeconds: 1800, notes: 'Rotated API keys.', status: 'completed' },
-              { taskId: 't_m3', title: 'Monthly Personal Retrospective', cadence: 'monthly', completed: false, timeSpentSeconds: 0, notes: 'Deferred to October.', status: 'pending' }
-            ]
-          }
-        },
-        yearly: {
-          '2025': {
-            periodKey: '2025',
-            cadence: 'yearly',
-            archivedAt: '2026-01-01T00:00:00.000Z',
-            summary: { totalTasks: 3, completedTasks: 3, completionRate: 100, avgTimeToCompletionMinutes: 120, totalTimeSpentMinutes: 360 },
-            tasks: [
-              { taskId: 't_y1', title: 'Annual OKRs & Strategic Roadmapping', cadence: 'yearly', completed: true, timeSpentSeconds: 9000, notes: 'Completed 2025 company roadmap.', status: 'completed' },
-              { taskId: 't_y2', title: 'Tax Preparation & Financial Planning', cadence: 'yearly', completed: true, timeSpentSeconds: 7200, notes: '2024 returns audited and settled.', status: 'completed' },
-              { taskId: 't_y3', title: 'Comprehensive Annual Health Checkup', cadence: 'yearly', completed: true, timeSpentSeconds: 5400, notes: 'Clean bill of health.', status: 'completed' }
-            ]
-          }
-        }
-      };
-
       return {
-        templates,
-        activePeriods,
-        history,
+        templates: [],
+        activePeriods: {
+          daily: { periodKey: dailyKey, tasks: [] },
+          weekly: { periodKey: weeklyKey, tasks: [] },
+          monthly: { periodKey: monthlyKey, tasks: [] },
+          yearly: { periodKey: yearlyKey, tasks: [] }
+        },
+        history: {
+          daily: {},
+          weekly: {},
+          monthly: {},
+          yearly: {}
+        },
         simulatedDate: null,
         theme: 'dark'
       };
     }
 
     // --- DUAL-ENGINE STORAGE MANAGEMENT (LocalStorage + IndexedDB) ---
-    const DB_NAME = 'PulseProTaskDB';
+    const DB_NAME = 'PulseProTaskDB_v3';
     const DB_VERSION = 1;
     const STORE_NAME = 'app_state';
 
